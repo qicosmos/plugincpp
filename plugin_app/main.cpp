@@ -32,7 +32,7 @@ msgpack::sbuffer mock_client_request_buffer(std::string key, Args... args){
 }
 
 void test_custom_dll(){
-  my_server server("/Users/yu/code/plugincpp/cmake-build-debug/libcustom.dylib");
+  my_server server("./libcustom.dylib");
 
   auto hello_buf = mock_client_request_buffer("hello");
   auto increment_buf = mock_client_request_buffer("increment", 42);
@@ -44,7 +44,7 @@ void test_custom_dll(){
 }
 
 void test_dummy_dll(){
-  my_server server("/Users/yu/code/plugincpp/cmake-build-debug/libdummy.dylib");
+  my_server server("./libdummy.dylib");
 
   auto multiply_buf = mock_client_request_buffer("multiply", 2, 3);
   auto substract_buf = mock_client_request_buffer("substract", 5, 2);
