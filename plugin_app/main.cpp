@@ -2,7 +2,7 @@
 #include <string>
 #include <boost/dll.hpp>
 #include <msgpack.hpp>
-#include "../plugin/common/msgpack_codec.h"
+#include "../common/msgpack_codec.h"
 
 struct my_server{
     my_server(const std::string& dll_path) : lib_(dll_path){
