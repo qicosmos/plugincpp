@@ -31,7 +31,7 @@ msgpack::sbuffer mock_client_request_buffer(std::string key, Args... args){
   return purecpp::msgpack_codec::pack_args(std::move(key), std::move(args)...);
 }
 
-int main(){
+void test_custom_dll(){
   my_server server("/Users/yu/code/plugincpp/cmake-build-debug/libcustom.dylib");
 
   auto hello_buf = mock_client_request_buffer("hello");
@@ -41,6 +41,21 @@ int main(){
   server.call(hello_buf);
   server.call(increment_buf);
   server.call(plus_buf);
+}
+
+void test_dummy_dll(){
+  my_server server("/Users/yu/code/plugincpp/cmake-build-debug/libdummy.dylib");
+
+  auto multiply_buf = mock_client_request_buffer("multiply", 2, 3);
+  auto substract_buf = mock_client_request_buffer("substract", 5, 2);
+
+  server.call(multiply_buf);
+  server.call(substract_buf);
+}
+
+int main(){
+  test_dummy_dll();
+  test_custom_dll();
 
   return 0;
 }

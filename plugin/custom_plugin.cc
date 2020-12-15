@@ -1,6 +1,5 @@
 //author qicosmos@163.com
 
-#include <iostream>
 #include "../common/plugin.hpp"
 
 namespace purecpp{

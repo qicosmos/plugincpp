@@ -11,6 +11,7 @@ include_directories(
         )
 
 add_library(custom SHARED plugin/custom_plugin.cc)
+add_library(dummy SHARED plugin/dummy_plugin.cc)
 
 add_executable(plugin_app plugin_app/main.cpp)
 target_link_libraries(plugin_app ${Boost_LIBRARIES})
