@@ -29,6 +29,13 @@ namespace purecpp{
 
       return 0;
     }
+
+    template<typename Self, typename Function>
+    int register_handler(Self&& self, std::string const& name, const Function& f) {
+      register_handler(name, f, &self);
+
+      return 0;
+    }
 }
 
 BOOST_DLL_ALIAS(purecpp::call_in_so, call_in_so);
@@ -43,3 +50,6 @@ BOOST_DLL_ALIAS(purecpp::call_in_so, call_in_so);
 
 #define ANNOTATION(f)\
 int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(#f, f);
+
+#define ANNOTATION_MEMBER(t, f)\
+int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(t, #f, f);
