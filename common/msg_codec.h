@@ -9,7 +9,7 @@
 namespace purecpp{
 
     using buffer_type = msgpack::sbuffer;
-    struct msgpack_codec {
+    struct msg_codec {
         const static size_t init_size = 2 * 1024;
 
         template<typename... Args>
@@ -49,6 +49,17 @@ namespace purecpp{
                 return as<Result>();
 
             } catch (...) { throw std::invalid_argument("unpack failed: arguments not match!"); }
+        }
+
+        int error_code(char const* data, size_t length){
+          std::tuple<int> code = unpack<std::tuple<int>>(data, length);
+          return std::get<0>(code);
+        }
+
+        template<typename Result>
+        Result result(char const* data, size_t length){
+          auto tp = unpack<std::tuple<int, Result>>(data, length);
+          return std::get<1>(tp);
         }
 
     private:

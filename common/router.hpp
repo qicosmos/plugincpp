@@ -5,13 +5,10 @@
 #include <unordered_map>
 #include <functional>
 #include "function_traits.h"
-#include "msgpack_codec.h"
+#include "msg_codec.h"
+#include "error_code.h"
 
 namespace purecpp{
-    enum  result_code {
-        OK = 0,
-        FAIL = 1,
-    };
 
     static const size_t MAX_BUF_LEN = 1048576 * 10;
 
@@ -39,23 +36,23 @@ namespace purecpp{
           do{
             try {
               //plus1, 1, 2--> 3()result
-              msgpack_codec codec;
+              msg_codec codec;
               auto p = codec.unpack<std::tuple<std::string>>(data, size);
               auto& func_name = std::get<0>(p);
               auto it = map_invokers_.find(func_name);
               if (it == map_invokers_.end()) {
-                result = codec.pack_args_str(result_code::FAIL, "unknown function: " + func_name);
+                result = codec.pack_args_str(error_code::FAIL, "unknown function: " + func_name);
                 break;
               }
 
               it->second(data, size, result);
               if (result.size() >= MAX_BUF_LEN) {
-                result = codec.pack_args_str(result_code::FAIL, "the response result is out of range: more than 10M " + func_name);
+                result = codec.pack_args_str(error_code::FAIL, "the response result is out of range: more than 10M " + func_name);
               }
             }
             catch (const std::exception & ex) {
-              msgpack_codec codec;
-              result = codec.pack_args_str(result_code::FAIL, ex.what());
+              msg_codec codec;
+              result = codec.pack_args_str(error_code::FAIL, ex.what());
             }
           }while(0);
 
@@ -79,7 +76,7 @@ namespace purecpp{
         typename std::enable_if<std::is_void<typename std::result_of<F(Args...)>::type>::value>::type
         call(const F & f, std::string & result, std::tuple<Arg, Args...> tp) {
           call_helper(f, std::make_index_sequence<sizeof...(Args)>{}, std::move(tp));
-          result = msgpack_codec::pack_args_str(result_code::OK);
+          result = msg_codec::pack_args_str(error_code::OK);
         }
 
         template<typename F, typename Arg, typename... Args>
@@ -87,8 +84,8 @@ namespace purecpp{
         typename std::enable_if<!std::is_void<typename std::result_of<F(Args...)>::type>::value>::type
         call(const F & f, std::string & result, std::tuple<Arg, Args...> tp) {
           auto r = call_helper(f, std::make_index_sequence<sizeof...(Args)>{}, std::move(tp));
-          msgpack_codec codec;
-          result = msgpack_codec::pack_args_str(result_code::OK, r);
+          msg_codec codec;
+          result = msg_codec::pack_args_str(error_code::OK, r);
         }
 
         template<typename F, typename Self, size_t... Indexes, typename Arg, typename... Args>
@@ -104,7 +101,7 @@ namespace purecpp{
         call_member(const F & f, Self * self, std::string & result,
                     std::tuple<Arg, Args...> tp) {
           call_member_helper(f, self, typename std::make_index_sequence<sizeof...(Args)>{}, std::move(tp));
-          result = msgpack_codec::pack_args_str(result_code::OK);
+          result = msg_codec::pack_args_str(error_code::OK);
         }
 
         template<typename F, typename Self, typename Arg, typename... Args>
@@ -114,7 +111,7 @@ namespace purecpp{
                     std::tuple<Arg, Args...> tp) {
           auto r =
                   call_member_helper(f, self, typename std::make_index_sequence<sizeof...(Args)>{}, std::move(tp));
-          result = msgpack_codec::pack_args_str(result_code::OK, r);
+          result = msg_codec::pack_args_str(error_code::OK, r);
         }
 
         template<typename Function>
@@ -122,16 +119,16 @@ namespace purecpp{
             static inline void apply(const Function& func, const char* data, size_t size,
                                      std::string& result) {
               using args_tuple = typename function_traits<Function>::args_tuple;
-              msgpack_codec codec;
+              msg_codec codec;
               try {
                 auto tp = codec.unpack<args_tuple>(data, size);
                 router::call(func, result, std::move(tp));
               }
               catch (std::invalid_argument & e) {
-                result = codec.pack_args_str(result_code::FAIL, e.what());
+                result = codec.pack_args_str(error_code::FAIL, e.what());
               }
               catch (const std::exception & e) {
-                result = codec.pack_args_str(result_code::FAIL, e.what());
+                result = codec.pack_args_str(error_code::FAIL, e.what());
               }
             }
 
@@ -139,16 +136,16 @@ namespace purecpp{
             static inline void apply_member(const Function& func, Self* self,
                                             const char* data, size_t size, std::string& result) {
               using args_tuple = typename function_traits<Function>::args_tuple;
-              msgpack_codec codec;
+              msg_codec codec;
               try {
                 auto tp = codec.unpack<args_tuple>(data, size);
                 call_member(func, self, result, std::move(tp));
               }
               catch (std::invalid_argument & e) {
-                result = codec.pack_args_str(result_code::FAIL, e.what());
+                result = codec.pack_args_str(error_code::FAIL, e.what());
               }
               catch (const std::exception & e) {
-                result = codec.pack_args_str(result_code::FAIL, e.what());
+                result = codec.pack_args_str(error_code::FAIL, e.what());
               }
             }
         };

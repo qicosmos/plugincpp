@@ -3,7 +3,7 @@
 namespace purecpp{
 
     int multiply(int a, int b){
-      return a - b;
+      return a * b;
     }
     ANNOTATION(multiply);
 
