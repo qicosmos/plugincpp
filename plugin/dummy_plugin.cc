@@ -23,6 +23,6 @@ namespace purecpp{
     };
 
     dummy_t dummy;
-    ANNOTATION_MEMBER(dummy_t{}, &dummy_t::echo);
-    ANNOTATION_MEMBER(dummy, &dummy_t::add);
+    ANNOTATION(dummy_t{}, &dummy_t::echo);
+    ANNOTATION(dummy, &dummy_t::add);
 }

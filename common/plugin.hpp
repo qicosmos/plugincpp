@@ -48,8 +48,16 @@ BOOST_DLL_ALIAS(purecpp::call_in_so, call_in_so);
 # define ANONYMOUS_VARIABLE(str) CONCATENATE(str, __LINE__)
 #endif
 
-#define ANNOTATION(f)\
-int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(#f, f);
+#define CAT( A, B ) A ## B
+#define SELECT( NAME, NUM ) CAT( NAME ## _, NUM )
 
-#define ANNOTATION_MEMBER(t, f)\
-int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(t, #f, f);
+#define VA_NARGS_IMPL(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, N, ...) N
+#define VA_NARGS(...) VA_NARGS_IMPL(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+#define VA_SIZE(...)   VA_NARGS(__VA_ARGS__)
+
+#define VA_SELECT( NAME, ... ) SELECT( NAME, VA_SIZE(__VA_ARGS__) )(__VA_ARGS__)
+
+#define ANNOTATION( ... ) VA_SELECT( MY_OVERLOADED, __VA_ARGS__ )
+
+#define MY_OVERLOADED_1( f ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(#f, f);
+#define MY_OVERLOADED_2( t, f ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(t, #f, f);
