@@ -5,12 +5,12 @@ namespace purecpp{
     int multiply(int a, int b){
       return a * b;
     }
-    ANNOTATION(multiply);
+    ADD_SERVICE(multiply);
 
     int substract(int a, int b){
       return a - b;
     }
-    ANNOTATION(substract);
+    ADD_SERVICE(substract);
 
     struct dummy_t{
         std::string echo(std::string str){
@@ -23,6 +23,6 @@ namespace purecpp{
     };
 
     dummy_t dummy;
-    ANNOTATION(dummy_t{}, &dummy_t::echo);
-    ANNOTATION(dummy, &dummy_t::add);
+    ADD_SERVICE(dummy_t{}, &dummy_t::echo);
+    ADD_SERVICE(dummy, &dummy_t::add);
 }

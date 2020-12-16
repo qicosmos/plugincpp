@@ -7,15 +7,15 @@ namespace purecpp{
     std::string hello(){
       return "hello 2020 pure c++ conference";
     }
-    ANNOTATION(hello);
+    ADD_SERVICE(hello);
 
     int increment(int i){
       return i + 1;
     }
-    ANNOTATION(increment);
+    ADD_SERVICE(increment);
 
     int plus(int a, int b){
       return a + b;
     }
-    ANNOTATION(plus);
+    ADD_SERVICE(plus);
 }

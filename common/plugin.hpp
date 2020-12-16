@@ -8,17 +8,15 @@
 #include <boost/dll.hpp>
 #include "router.hpp"
 
-static auto& g_router = purecpp::router::get();
-
 namespace purecpp{
 
     std::string call_in_so(const char *data, std::size_t size) {
-      return g_router.route(data, size);
+      return purecpp::router::get().route(data, size);
     }
 
     template<typename Function>
     int register_handler(std::string const& name, Function f){
-      g_router.register_handler(name, std::move(f));
+      purecpp::router::get().register_handler(name, std::move(f));
 
       return 0;
     }
@@ -26,7 +24,7 @@ namespace purecpp{
     template<typename Function, typename Self>
     int register_handler(std::string const& name, const Function& f, Self* self) {
       std::string key(name.data()+1, name.size()-1);
-      g_router.register_handler(key, f, self);
+      purecpp::router::get().register_handler(key, f, self);
 
       return 0;
     }
@@ -58,7 +56,7 @@ BOOST_DLL_ALIAS(purecpp::call_in_so, call_in_so);
 
 #define VA_SELECT( NAME, ... ) SELECT( NAME, VA_SIZE(__VA_ARGS__) )(__VA_ARGS__)
 
-#define ANNOTATION( ... ) VA_SELECT( MY_OVERLOADED, __VA_ARGS__ )
+#define ADD_SERVICE( ... ) VA_SELECT( MY_OVERLOADED, __VA_ARGS__ )
 
 #define MY_OVERLOADED_1( f ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(#f, f);
 #define MY_OVERLOADED_2( t, f ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(t, #f, f);
