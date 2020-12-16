@@ -25,7 +25,8 @@ namespace purecpp{
 
     template<typename Function, typename Self>
     int register_handler(std::string const& name, const Function& f, Self* self) {
-      g_router.register_handler(name, f, self);
+      std::string key(name.data()+1, name.size()-1);
+      g_router.register_handler(key, f, self);
 
       return 0;
     }

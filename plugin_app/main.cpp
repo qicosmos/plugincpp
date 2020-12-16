@@ -66,10 +66,10 @@ void test_dummy_dll(){
 
   int sub_ret = server.call<int>(substract_buf);
 
-  auto echo_buf = mock_client_request_buffer("&dummy_t::echo", "hello purecpp");
+  auto echo_buf = mock_client_request_buffer("dummy_t::echo", "hello purecpp");
   std::string echo_str = server.call<std::string>(echo_buf);
 
-  auto add_buf = mock_client_request_buffer("&dummy_t::add", 2, 3);
+  auto add_buf = mock_client_request_buffer("dummy_t::add", 2, 3);
   int add_ret = server.call<int>(add_buf);
 
   std::cout<<sub_ret<<" "<<multiply_ret<<" "<<echo_str<<" "<<add_ret<<'\n';
