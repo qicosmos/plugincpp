@@ -59,4 +59,4 @@ BOOST_DLL_ALIAS(purecpp::call_in_so, call_in_so);
 #define ADD_SERVICE( ... ) VA_SELECT( MY_OVERLOADED, __VA_ARGS__ )
 
 #define MY_OVERLOADED_1( f ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(#f, f);
-#define MY_OVERLOADED_2( t, f ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(t, #f, f);
+#define MY_OVERLOADED_2( f, t ) int ANONYMOUS_VARIABLE(var) = purecpp::register_handler(#f, f, t);

@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.1)
 project(plugin_app)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+add_definitions(-w)
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 include_directories(
         "/usr/local/include"
         "/usr/local/include/msgpack/include"
+        "/usr/local/cinatra/include"
+        "/usr/local/rest_rpc/include"
         )
 
 add_library(custom SHARED plugin/custom_plugin.cc)

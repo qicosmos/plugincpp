@@ -23,6 +23,6 @@ namespace purecpp{
     };
 
     dummy_t dummy;
-    ADD_SERVICE(dummy_t{}, &dummy_t::echo);
-    ADD_SERVICE(dummy, &dummy_t::add);
+    ADD_SERVICE(&dummy_t::echo, &dummy);
+    ADD_SERVICE(&dummy_t::add, &dummy);
 }

@@ -4,9 +4,15 @@
 #include <msgpack.hpp>
 #include "../common/msg_codec.h"
 #include "../common/error_code.h"
+#include <cinatra.hpp>
+#include <rest_rpc.hpp>
 
-struct my_server{
-    my_server(const std::string& dll_path) : lib_(dll_path){
+using namespace rest_rpc;
+using namespace rpc_service;
+using namespace cinatra;
+
+struct plugin_resolver{
+    plugin_resolver(const std::string& dll_path) : lib_(dll_path){
       call_in_so_ = boost::dll::import_alias<std::string(const char*, size_t)>(lib_, "call_in_so");
     }
 
@@ -18,66 +24,81 @@ struct my_server{
       return codec.result<R>(str.data(), str.size()); //transforma failed will throw exception
     }
 
-private:
     std::string call(const msgpack::sbuffer& buf){
+      return call(buf.data(), buf.size());
+    }
+
+    std::string call(const char* buf, size_t size){
       using namespace purecpp;
 
       std::string result;
       try {
-        result = call_in_so_(buf.data(), buf.size());
+        result = call_in_so_(buf, size);
       }catch(std::exception& e){
         msg_codec codec;
-        result = codec.pack_args_str(error_code::FAIL, e.what());
+        result = codec.pack_args_str(purecpp::error_code::FAIL, e.what());
       }
 
       return result;
     }
 
+private:
     boost::dll::shared_library lib_;
     std::function<std::string(const char*, size_t)> call_in_so_;
 };
 
+std::unordered_map<std::string, std::shared_ptr<plugin_resolver>> g_plugin_map;
 
-template<typename... Args>
-msgpack::sbuffer mock_client_request_buffer(std::string key, Args... args){
-  return purecpp::msg_codec::pack_args(std::move(key), std::move(args)...);
+void start_rpc_server(){
+  rpc_server server(9000, std::thread::hardware_concurrency());
+
+  server.register_handler("plugin_service", [](rpc_conn conn, std::string plugin_name, std::string service_buf){
+      auto it = g_plugin_map.find(plugin_name);
+      if(it==g_plugin_map.end()){
+        return std::string();
+      }
+
+      return it->second->call(service_buf.data(), service_buf.size());
+  });
+
+  server.run();
 }
 
-void test_custom_dll(){
-  my_server server("./libcustom.dylib");
+void start_http_server(){
+  int max_thread_num = std::thread::hardware_concurrency();
+  http_server server(max_thread_num);
+  server.set_multipart_begin([](request& req, std::string& name){
+    name = req.get_multipart_field_name("filename");
+  });
+  server.listen("0.0.0.0", "80");
 
-  auto hello_buf = mock_client_request_buffer("hello");
-  auto increment_buf = mock_client_request_buffer("increment", 42);
-  auto plus_buf = mock_client_request_buffer("plus", 2, 3);
+  server.set_http_handler<POST>("/add_plugin", [](request& req, response& res) {
+      auto& files = req.get_upload_files();
+      for (auto& file : files) {
+        std::string plugin_name = std::string(req.get_query_value("plugin_name"));
+        g_plugin_map.emplace(plugin_name, std::make_unique<plugin_resolver>(file.get_file_path()));
+      }
 
-  std::string str = server.call<std::string>(hello_buf);
-  int a = server.call<int>(increment_buf);
-  int b = server.call<int>(plus_buf);
-  std::cout<<str<<" "<<a<<" "<<b<<'\n';
-}
+      res.set_status_and_content(status_type::ok, "add plugin successful");
+  });
 
-void test_dummy_dll(){
-  my_server server("./libdummy.dylib");
+  server.set_http_handler<POST>("/remove_plugin", [](request& req, response& res) {
+      std::string plugin_name = std::string(req.get_query_value("plugin_name"));
+      auto it = g_plugin_map.find(plugin_name);
+      g_plugin_map.erase(it);
 
-  auto multiply_buf = mock_client_request_buffer("multiply", 2, 3);
-  auto substract_buf = mock_client_request_buffer("substract", 5, 2);
+      res.set_status_and_content(status_type::ok, "remove plugin successful");
+  });
 
-  auto multiply_ret = server.call<int>(multiply_buf);
-
-  int sub_ret = server.call<int>(substract_buf);
-
-  auto echo_buf = mock_client_request_buffer("dummy_t::echo", "hello purecpp");
-  std::string echo_str = server.call<std::string>(echo_buf);
-
-  auto add_buf = mock_client_request_buffer("dummy_t::add", 2, 3);
-  int add_ret = server.call<int>(add_buf);
-
-  std::cout<<sub_ret<<" "<<multiply_ret<<" "<<echo_str<<" "<<add_ret<<'\n';
+  server.run();
 }
 
 int main(){
-  test_dummy_dll();
-  test_custom_dll();
+  std::thread rpc_thd(start_rpc_server);
+  std::thread http_thd(start_http_server);
+
+  rpc_thd.join();
+  http_thd.join();
 
   return 0;
 }
