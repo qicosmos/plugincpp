@@ -1,5 +1,5 @@
 # plugincpp
-a modern c++ plugin library.
+a modern c++ plugin library. It is in experiment.
 
 Dependency:
 
