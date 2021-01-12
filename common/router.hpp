@@ -20,8 +20,9 @@ namespace purecpp{
         }
 
         template<typename Function>
-        void register_handler(std::string const& name, Function f) {
-          return register_nonmember_func(name, std::move(f));
+        void register_handler(std::string const& name, const Function& f) {
+          func_ptr_to_key_map_.emplace((void*)&f, name);
+          return register_nonmember_func(name, f);
         }
 
         template<typename Function, typename Self>
@@ -30,6 +31,15 @@ namespace purecpp{
         }
 
         void remove_handler(std::string const& name) { this->map_invokers_.erase(name); }
+
+        std::string get_key(void* ptr){
+          auto it = func_ptr_to_key_map_.find(ptr);
+          if(it!=func_ptr_to_key_map_.end()){
+            return it->second;
+          }
+
+          return "";
+        }
 
         std::string route(const char* data, std::size_t size) {
           std::string result;
@@ -166,5 +176,6 @@ namespace purecpp{
         std::unordered_map<std::string,
                 std::function<void(const char*, size_t, std::string&)>>
                 map_invokers_;
+        std::unordered_map<void*, std::string> func_ptr_to_key_map_;
     };
 }

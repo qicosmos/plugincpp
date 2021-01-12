@@ -4,6 +4,51 @@
 #include <msgpack.hpp>
 #include "../common/msg_codec.h"
 #include "../common/error_code.h"
+#include "../plugin/dummy_plugin.cc"
+
+struct plugin_resolver{
+  plugin_resolver(const std::string& dll_path) : lib_(dll_path){
+    call_in_so_ = boost::dll::import_alias<std::string(const char*, size_t)>(lib_, "call_in_so");
+    get_key_in_so_ = boost::dll::import_alias<std::string(void*)>(lib_, "get_key");
+  }
+
+  template<typename R>
+  R call(const msgpack::sbuffer& buf){
+    auto str = call(buf);
+    //TODO handle error code and exception
+    purecpp::msg_codec codec;
+    return codec.result<R>(str.data(), str.size()); //transforma failed will throw exception
+  }
+
+  template<typename F>
+  std::string get_key(const F& func){
+    void* ptr = (void*)&func;
+    return get_key_in_so_(ptr);
+  }
+
+  std::string call(const msgpack::sbuffer& buf){
+    return call(buf.data(), buf.size());
+  }
+
+  std::string call(const char* buf, size_t size){
+    using namespace purecpp;
+
+    std::string result;
+    try {
+      result = call_in_so_(buf, size);
+    }catch(std::exception& e){
+      msg_codec codec;
+      result = codec.pack_args_str(purecpp::error_code::FAIL, e.what());
+    }
+
+    return result;
+  }
+
+private:
+  boost::dll::shared_library lib_;
+  std::function<std::string(const char*, size_t)> call_in_so_;
+  std::function<std::string(void*)> get_key_in_so_;
+};
 
 template<typename... Args>
 msgpack::sbuffer mock_client_request_buffer(std::string key, Args... args){
@@ -12,6 +57,9 @@ msgpack::sbuffer mock_client_request_buffer(std::string key, Args... args){
 
 void test_custom_dll(){
   plugin_resolver resolver("./libcustom.dylib");
+
+  auto s = resolver.get_key(purecpp::multiply);
+  auto s1 = resolver.get_key(purecpp::substract);
 
   auto hello_buf = mock_client_request_buffer("hello");
   auto plus_buf = mock_client_request_buffer("plus", 2, 3);
@@ -26,6 +74,9 @@ void test_custom_dll(){
 
 void test_dummy_dll(){
   plugin_resolver server("./libdummy.dylib");
+
+  auto s = server.get_key(purecpp::multiply);
+  auto s1 = server.get_key(purecpp::substract);
 
   auto multiply_buf = mock_client_request_buffer("multiply", 2, 3);
   auto substract_buf = mock_client_request_buffer("substract", 5, 2);
@@ -43,3 +94,6 @@ void test_dummy_dll(){
   std::cout<<sub_ret<<" "<<multiply_ret<<" "<<echo_str<<" "<<add_ret<<'\n';
 }
 
+int main(){
+  test_dummy_dll();
+}

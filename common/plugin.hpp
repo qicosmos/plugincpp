@@ -14,9 +14,13 @@ namespace purecpp{
       return purecpp::router::get().route(data, size);
     }
 
+    std::string get_key(void* ptr){
+      return purecpp::router::get().get_key(ptr);
+    }
+
     template<typename Function>
-    int register_handler(std::string const& name, Function f){
-      purecpp::router::get().register_handler(name, std::move(f));
+    int register_handler(std::string const& name, const Function& f){
+      purecpp::router::get().register_handler(name, f);
 
       return 0;
     }
@@ -38,6 +42,7 @@ namespace purecpp{
 }
 
 BOOST_DLL_ALIAS(purecpp::call_in_so, call_in_so);
+BOOST_DLL_ALIAS(purecpp::get_key, get_key);
 
 #define CONCATENATE_DIRECT(s1, s2) s1##s2
 #define CONCATENATE(s1, s2) CONCATENATE_DIRECT(s1, s2)
