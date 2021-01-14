@@ -79,12 +79,12 @@ void test_custom_dll(){
 int multiply(int a, int b);
 
 void test_dummy_dll(){
-  plugin_resolver server("./libdummy.dylib");
+  plugin_resolver resolver("./libdummy.dylib");
 
-  auto buf1 = mock_client_request_buffer1(server, purecpp::multiply, 2, 3);
-  int r1 = server.call<int>(buf1);
-  auto buf2 = mock_client_request_buffer1(server, purecpp::substract, 5, 2);
-  int r2 = server.call<int>(buf2);
+  auto buf1 = mock_client_request_buffer1(resolver, purecpp::multiply, 2, 3);
+  int r1 = resolver.call<int>(buf1);
+  auto buf2 = mock_client_request_buffer1(resolver, purecpp::substract, 5, 2);
+  int r2 = resolver.call<int>(buf2);
 
 //  auto s = server.get_key(purecpp::multiply);
 //  auto s1 = server.get_key(purecpp::substract);
@@ -92,15 +92,15 @@ void test_dummy_dll(){
   auto multiply_buf = mock_client_request_buffer("multiply", 2, 3);
   auto substract_buf = mock_client_request_buffer("substract", 5, 2);
 
-  auto multiply_ret = server.call<int>(multiply_buf);
+  auto multiply_ret = resolver.call<int>(multiply_buf);
 
-  int sub_ret = server.call<int>(substract_buf);
+  int sub_ret = resolver.call<int>(substract_buf);
 
   auto echo_buf = mock_client_request_buffer("dummy_t::echo", "hello purecpp");
-  std::string echo_str = server.call<std::string>(echo_buf);
+  std::string echo_str = resolver.call<std::string>(echo_buf);
 
   auto add_buf = mock_client_request_buffer("dummy_t::add", 2, 3);
-  int add_ret = server.call<int>(add_buf);
+  int add_ret = resolver.call<int>(add_buf);
 
   std::cout<<sub_ret<<" "<<multiply_ret<<" "<<echo_str<<" "<<add_ret<<'\n';
 }
