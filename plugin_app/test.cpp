@@ -55,12 +55,16 @@ msgpack::sbuffer mock_client_request_buffer(std::string key, Args... args){
   return purecpp::msg_codec::pack_args(std::move(key), std::move(args)...);
 }
 
+
+
+template<typename T, typename F, typename... Args>
+msgpack::sbuffer mock_client_request_buffer1(T& presolver, const F& f, Args... args){
+  std::string key = presolver.get_key(f);
+  return purecpp::msg_codec::pack_args(std::move(key), std::move(args)...);
+}
+
 void test_custom_dll(){
   plugin_resolver resolver("./libcustom.dylib");
-
-  auto s = resolver.get_key(purecpp::multiply);
-  auto s1 = resolver.get_key(purecpp::substract);
-
   auto hello_buf = mock_client_request_buffer("hello");
   auto plus_buf = mock_client_request_buffer("plus", 2, 3);
 
@@ -72,11 +76,18 @@ void test_custom_dll(){
   std::cout<<str<<" "<<a<<" "<<r<<'\n';
 }
 
+int multiply(int a, int b);
+
 void test_dummy_dll(){
   plugin_resolver server("./libdummy.dylib");
 
-  auto s = server.get_key(purecpp::multiply);
-  auto s1 = server.get_key(purecpp::substract);
+  auto buf1 = mock_client_request_buffer1(server, purecpp::multiply, 2, 3);
+  int r1 = server.call<int>(buf1);
+  auto buf2 = mock_client_request_buffer1(server, purecpp::substract, 5, 2);
+  int r2 = server.call<int>(buf2);
+
+//  auto s = server.get_key(purecpp::multiply);
+//  auto s1 = server.get_key(purecpp::substract);
 
   auto multiply_buf = mock_client_request_buffer("multiply", 2, 3);
   auto substract_buf = mock_client_request_buffer("substract", 5, 2);
